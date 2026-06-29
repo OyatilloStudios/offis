@@ -1,0 +1,6 @@
+{
+  "name": "Oson Ofis",
+  "description": "Yengil va tezkor PDF va matnli hujjatlarni ko'rish dasturi. Barcha ofis va matn formatlarini qo'llab-quvvatlaydi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
