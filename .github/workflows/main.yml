@@ -13,13 +13,13 @@ jobs:
     - name: 1. Kodni yuklab olish
       uses: actions/checkout@v4
 
-    - name: 2. Java 21 o'rnatish (Yangi Gradle uchun)
+    - name: 2. Java 21 o'rnatish
       uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
 
-    - name: 3. Xatoliklarni tozalash (AI qoldirgan xatolarni yopish)
+    - name: 3. Xatoliklarni tozalash va muhitni tayyorlash
       run: |
         TARGET_DIR=$(dirname $(find . -name "app" -type d | head -n 1))
         cd $TARGET_DIR
@@ -34,13 +34,16 @@ jobs:
           sed -i 's/"ksp"(/add("ksp", /g' app/build.gradle.kts
           sed -i 's/ksp(/add("ksp", /g' app/build.gradle.kts
         fi
+        
+        # YETISHMAYOTGAN DEBUG.KEYSTORE FAYLINI AVTOMATIK YARATISH
+        keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        echo "Keystore fayli yaratildi."
 
     - name: 4. Toza Gradle 9.3.1 dvigatelini o'rnatish
       run: |
         TARGET_DIR=$(dirname $(find . -name "app" -type d | head -n 1))
         cd $TARGET_DIR
         
-        # Tizim so'ragan 9.3.1 versiyani yuklaymiz
         wget -q https://services.gradle.org/distributions/gradle-9.3.1-bin.zip
         unzip -q gradle-9.3.1-bin.zip
 
@@ -49,7 +52,7 @@ jobs:
         TARGET_DIR=$(dirname $(find . -name "app" -type d | head -n 1))
         cd $TARGET_DIR
         
-        # 9.3.1 versiya orqali yig'amiz
+        # Lint va boshqa ortiqcha tekshiruvlarni butunlay o'chirib qo'yamiz
         ./gradle-9.3.1/bin/gradle assembleDebug -x lint -x test --no-daemon
 
     - name: 6. Tayyor faylni olish
