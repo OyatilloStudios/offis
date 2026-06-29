@@ -1,0 +1,62 @@
+name: Oson Ofis APK Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 1. Kodni yuklab olish
+      uses: actions/checkout@v4
+
+    - name: 2. Java 17 o'rnatish
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: 3. Xatoliklarni tozalash (AI qoldirgan xatolarni yopish)
+      run: |
+        # Qaysi papkada ekanini avtomat topamiz
+        TARGET_DIR=$(dirname $(find . -name "app" -type d | head -n 1))
+        cd $TARGET_DIR
+        
+        echo "Ishchi papka: $TARGET_DIR"
+        
+        # Muhit fayllarini yaratamiz
+        touch .env .env.example
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+        
+        # Eng asosiy xato: "ksp" xatolarini to'g'rilash (Sed orqali o'zgartiramiz)
+        if [ -f "app/build.gradle.kts" ]; then
+          echo "build.gradle.kts tozalanmoqda..."
+          sed -i 's/"ksp"(/add("ksp", /g' app/build.gradle.kts
+          sed -i 's/ksp(/add("ksp", /g' app/build.gradle.kts
+        fi
+
+    - name: 4. Toza Gradle dvigatelini o'rnatish
+      run: |
+        TARGET_DIR=$(dirname $(find . -name "app" -type d | head -n 1))
+        cd $TARGET_DIR
+        
+        # Eski va buzuq dvigatel o'rniga tozasini tortamiz
+        wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
+        unzip -q gradle-8.11.1-bin.zip
+
+    - name: 5. Dasturni yig'ish (Build APK)
+      run: |
+        TARGET_DIR=$(dirname $(find . -name "app" -type d | head -n 1))
+        cd $TARGET_DIR
+        
+        # Toza o'rnatilgan Gradle orqali APK ni yig'amiz
+        ./gradle-8.11.1/bin/gradle assembleDebug -x lint -x test --no-daemon
+
+    - name: 6. Tayyor faylni olish
+      uses: actions/upload-artifact@v4
+      with:
+        name: Tayyor-APK-Fayl
+        path: "**/app/build/outputs/apk/debug/*.apk"
